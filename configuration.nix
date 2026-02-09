@@ -24,7 +24,7 @@
 
   # Search for additional packages here: https://search.nixos.org/packages
   environment.systemPackages = with pkgs; [
-    neovim
+    micro
     git
   ];
 
@@ -32,7 +32,7 @@
   users.users = {
     # TODO: Replace `aldur` with the username you picked when configuring Linux
     # in ChromeOS.
-    aldur = {
+    chronos = {
       isNormalUser = true;
 
       linger = true;
@@ -43,5 +43,5 @@
   security.sudo.wheelNeedsPassword = false;
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
 }
