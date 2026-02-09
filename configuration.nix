@@ -1,47 +1,65 @@
-# Originally taken from:
-# https://github.com/Misterio77/nix-starter-configs/blob/cd2634edb7742a5b4bbf6520a2403c22be7013c6/minimal/nixos/configuration.nix
-# This is your system's configuration file.
-# Use this to configure your system environment (it replaces /etc/nixos/configuration.nix)
-{
-  # inputs,
-  # lib,
-  # config,
-  pkgs,
-  ...
-}:
-{
-  imports = [
-    # You can import other NixOS modules here.
-    # You can also split up your configuration and import pieces of it here:
-    # ./users.nix
-  ];
+{ lib, pkgs, ... }:
 
-  # Enable flakes: https://nixos.wiki/wiki/Flakes
+let
+  crostiniPath =
+    "/opt/google/cros-containers/bin"
+    + ":/run/wrappers/bin"
+    + ":/etc/profiles/per-user/chronos/bin"
+    + ":/nix/var/nix/profiles/default/bin"
+    + ":/run/current-system/sw/bin";
+in
+{
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
   ];
 
-  # Search for additional packages here: https://search.nixos.org/packages
   environment.systemPackages = with pkgs; [
     micro
-    git
+    git gh
+    podman
+	dconf
+	glib
+    nerd-fonts.jetbrains-mono
   ];
 
-  # Configure your system-wide user settings (groups, etc), add more users as needed.
-  users.users = {
-    # TODO: Replace `aldur` with the username you picked when configuring Linux
-    # in ChromeOS.
-    chronos = {
-      isNormalUser = true;
+  environment.sessionVariables = {
+    PATH = crostiniPath;
+    GDK_BACKEND = "wayland";
+    WAYLAND_DISPLAY = "wayland-0";
+    VK_ICD_FILENAMES = "/dev/null";
+    VK_DRIVER_FILES = "/dev/null";
+   
+    XDG_DATA_DIRS =
+      "/run/current-system/sw/share:" 
+      + "/var/lib/flatpak/exports/share:"
+      + "/home/chronos/.local/share/flatpak/exports/share";
+  };
 
-      linger = true;
-      extraGroups = [ "wheel" ];
-    };
+  users.users.chronos = {
+    isNormalUser = true;
+    linger = true;
+    extraGroups = [ "wheel" "video" "render" ];
   };
 
   security.sudo.wheelNeedsPassword = false;
 
-  # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
+  xdg.portal = {
+    enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+    config.common.default = "gtk";
+  };
+
+  services.dbus.enable = true;
+  services.flatpak.enable = true;
+
+  hardware.graphics.enable = true;
+
+  virtualisation.podman.enable = true;
+
+  systemd.user.services.garcon.environment.PATH = lib.mkForce crostiniPath;
+  systemd.user.services.xdg-desktop-portal.environment.PATH = lib.mkForce crostiniPath;
+  systemd.user.services.xdg-desktop-portal-gtk.environment.PATH = lib.mkForce crostiniPath;
+
   system.stateVersion = "25.11";
 }
